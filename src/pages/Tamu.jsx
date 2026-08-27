@@ -47,12 +47,12 @@ export default function Tamu() {
 
 Yth. Ibu/Bapak/Saudara/i *{nama}*,
 
-Dengan penuh kebahagiaan, kami mengundang Ibu/Bapak/Saudara/i untuk hadir di acara *Akad & Resepsi Pernikahan Ery & Amel*. 💍✨
+Dengan penuh kebahagiaan, kami mengundang Ibu/Bapak/Saudara/i untuk hadir di acara *Akad Pernikahan Ery & Amel*. 💍✨
 
-📅 Minggu, 13 September 2026
+📅 Sabtu, 05 September 2026
 🕘 Pukul 09.00 WITA – selesai
-📍 Rumah Mempelai Pria
-Jl. Antasan Kecil Barat Gg. Ibu RT.13 No.59
+📍 Rumah Mempelai Wanita
+Jl. Sungai Andai Komplek PWI Blok E No. 121
 
 Untuk informasi lengkap mengenai acara dan konfirmasi kehadiran, silakan buka undangan digital berikut:
 
