@@ -155,7 +155,7 @@ Wassalamu’alaikum Wr. Wb.`;
 
         <div className="flex items-center justify-between pt-1">
           <span className="text-xs text-slate-400">
-            *Perubahan teks akan tersimpan otomatis di browser klien.
+            *Perubahan teks bisa diubah sesuai kebutuhan. Gunakan tombol "Simpan Template" untuk menyimpan format pesan yang telah diedit.
           </span>
           <button
             onClick={handleSaveTemplate}
