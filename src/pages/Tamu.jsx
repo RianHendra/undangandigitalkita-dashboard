@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Copy, Search, Check, Trash2, MessageCircle, FileText, Send, Save } from 'lucide-react';
+import { Users, Plus, Copy, Search, Check, Trash2, MessageCircle, FileText, Send, Save, RefreshCw } from 'lucide-react';
 
 export default function Tamu() {
-  const [tamuList, setTamuList] = useState([
-    { id: 1, name: 'Rian Hendra Saputra', phone: '087716555618' },
-  
-  ]);
+  const [tamuList, setTamuList] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [newGuestName, setNewGuestName] = useState('');
   const [newGuestPhone, setNewGuestPhone] = useState('');
@@ -14,36 +12,60 @@ export default function Tamu() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [saveStatus, setSaveStatus] = useState(false);
 
-  // Default template awal jika belum pernah disimpan
+  // URL Web App khusus DATA TAMU (terpisah dari RSVP)
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw79k158qMN7B33Uw3dJuic654ArSVsG___TJt2004PRX-jLA7HvALkpp4NTm4svCs/exec';
+
+  // Ambil data tamu
+  const fetchTamuData = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${SCRIPT_URL}?action=tamu`);
+      const textResponse = await response.text(); // Ambil dulu sebagai teks untuk dicek
+      
+      // Cek apakah respons dari Apps Script benar-benar JSON atau error HTML
+      if (textResponse.startsWith('[')) {
+        const data = JSON.parse(textResponse);
+        setTamuList(Array.isArray(data) ? data : []);
+      } else {
+        console.error('Format data bukan JSON:', textResponse);
+        setTamuList([]);
+      }
+    } catch (err) {
+      console.error('Gagal mengambil data tamu:', err);
+      setTamuList([]); // Tetap set array kosong agar tidak error
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTamuData();
+  }, []);
+
   const defaultTemplate = 
 `Assalamu’alaikum Wr. Wb.
 
 Yth. Ibu/Bapak/Saudara/i *{nama}*,
 
-Dengan penuh kebahagiaan, kami mengundang Ibu/Bapak/Saudara/i untuk hadir di acara *Akad Pernikahan Ery & Amel*. 💍✨
+Dengan penuh kebahagiaan, kami mengundang Ibu/Bapak/Saudara/i untuk hadir di acara *Akad & Resepsi Pernikahan Ery & Amel*. 💍✨
 
-📅 Sabtu, 05 September 2026
+📅 Minggu, 13 September 2026
 🕘 Pukul 09.00 WITA – selesai
-📍 Rumah Mempelai Wanita
-Jl. Sungai Andai Komplek PWI Blok E No. 121
+📍 Rumah Mempelai Pria
+Jl. Antasan Kecil Barat Gg. Ibu RT.13 No.59
 
-Untuk informasi lengkap mengenai acara, lokasi, dan konfirmasi kehadiran, silakan buka undangan digital berikut:
+Untuk informasi lengkap mengenai acara dan konfirmasi kehadiran, silakan buka undangan digital berikut:
 
 {link}
-
-Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Ibu/Bapak/Saudara/i *{nama}* berkenan hadir dan memberikan doa restu untuk kedua mempelai.
 
 Terima kasih atas perhatian dan doanya. 🙏
 
 Wassalamu’alaikum Wr. Wb.`;
 
-  // Ambil template tersimpan dari localStorage saat pertama kali load
   const [waTemplate, setWaTemplate] = useState(() => {
-    const savedTemplate = localStorage.getItem('custom_wa_template');
-    return savedTemplate !== null ? savedTemplate : defaultTemplate;
+    return localStorage.getItem('custom_wa_template') || defaultTemplate;
   });
 
-  // Fungsi menyimpan template ke localStorage
   const handleSaveTemplate = (e) => {
     e.preventDefault();
     localStorage.setItem('custom_wa_template', waTemplate);
@@ -51,64 +73,79 @@ Wassalamu’alaikum Wr. Wb.`;
     setTimeout(() => setSaveStatus(false), 2500);
   };
 
-  // Helper membuat link undangan personal
   const getPersonalLink = (name) => {
     return `https://www.undangandigitalkita.my.id/erydanamel/akad?to=${encodeURIComponent(name)}`;
   };
 
-  // Helper menyusun pesan lengkap
   const generateMessage = (name) => {
     const link = getPersonalLink(name);
-    return waTemplate
-      .replace(/{nama}/g, name)
-      .replace(/{link}/g, link);
+    return waTemplate.replace(/{nama}/g, name).replace(/{link}/g, link);
   };
 
-  // Fungsi Tambah Tamu
-  const handleAddGuest = (e) => {
+  // Tambah tamu aman menggunakan URLSearchParams (cocok dengan e.parameter di Apps Script)
+  const handleAddGuest = async (e) => {
     e.preventDefault();
     if (!newGuestName.trim()) return;
 
+    const guestId = Date.now();
     const newGuest = {
-      id: Date.now(),
+      id: guestId,
       name: newGuestName.trim(),
       phone: newGuestPhone.trim(),
     };
 
+    // Update state instan
     setTamuList([newGuest, ...tamuList]);
     setNewGuestName('');
     setNewGuestPhone('');
     setIsModalOpen(false);
+
+    try {
+      const formData = new URLSearchParams();
+formData.append('action', 'tambah_tamu'); // <-- Penanda agar masuk ke sheet DataTamu
+formData.append('id', guestId);
+formData.append('nama', newGuest.name);
+formData.append('telepon', newGuest.phone);
+
+await fetch(SCRIPT_URL, {
+  method: 'POST',
+  mode: 'no-cors',
+  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  body: formData.toString()
+});
+    } catch (err) {
+      console.error('Gagal menyimpan tamu:', err);
+    }
   };
 
-  // Fungsi Hapus Tamu
-  const handleDelete = (id) => {
-    setTamuList(tamuList.filter(tamu => tamu.id !== id));
-  };
-
-  // Salin Link saja
-  const handleCopyLinkOnly = (name, id) => {
-    const link = getPersonalLink(name);
-    navigator.clipboard.writeText(link);
-    setCopiedId(`link-${id}`);
+  const handleCopyLinkOnly = (name, index) => {
+    navigator.clipboard.writeText(getPersonalLink(name));
+    setCopiedId(`link-${index}`);
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  // Salin Teks Pesan WA Lengkap
-  const handleCopyFullMessage = (name, id) => {
-    const message = generateMessage(name);
-    navigator.clipboard.writeText(message);
-    setCopiedId(`msg-${id}`);
+  const handleCopyFullMessage = (name, index) => {
+    navigator.clipboard.writeText(generateMessage(name));
+    setCopiedId(`msg-${index}`);
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  // Kirim WhatsApp Langsung
-  const handleSendWhatsapp = (name, phone) => {
+ const handleSendWhatsapp = (name, phone) => {
     const message = generateMessage(name);
-    const encodedMessage = encodeURIComponent(message);
-    const waUrl = phone 
-      ? `https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=${encodedMessage}`
-      : `https://wa.me/?text=${encodedMessage}`;
+    
+    // Ubah phone menjadi string terlebih dahulu untuk mencegah error jika terbaca sebagai angka/kosong
+    const phoneString = phone ? String(phone).replace(/[^0-9]/g, '') : '';
+    
+    // Jika angka diawali dengan '8' (karena 0 nya terlanjur hilang di sheets), kita tambahkan '0' atau '62' di depannya secara otomatis
+    let formattedPhone = phoneString;
+    if (formattedPhone.startsWith('8')) {
+      formattedPhone = '0' + formattedPhone;
+    }
+
+    const waUrl = formattedPhone 
+      ? `https://wa.me/${formattedPhone.replace(/^0/, '62')}?text=${encodeURIComponent(message)}`
+      : `https://wa.me/?text=${encodeURIComponent(message)}`;
+      
     window.open(waUrl, '_blank');
   };
 
@@ -118,51 +155,50 @@ Wassalamu’alaikum Wr. Wb.`;
 
   return (
     <div className="space-y-6">
-      
-      {/* Header & Tombol Tambah */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Data Tamu & Link Personal</h1>
-          <p className="text-slate-500 text-sm">Kelola daftar tamu, buat link unik, dan sesuaikan template pesan WhatsApp</p>
+          <p className="text-slate-500 text-sm">Kelola daftar tamu dan generate link unik</p>
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 transition-all shadow-sm cursor-pointer"
-        >
-          <Plus size={16} /> Tambah Tamu Baru
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={fetchTamuData}
+            className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 transition-all cursor-pointer"
+            title="Refresh Data Tamu"
+          >
+            <RefreshCw size={16} className={loading ? "animate-spin text-rose-600" : ""} />
+            <span>Refresh</span>
+          </button>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 transition-all shadow-sm cursor-pointer"
+          >
+            <Plus size={16} /> Tambah Tamu Baru
+          </button>
+        </div>
       </div>
 
-      {/* Box Template Pesan Custom WhatsApp yang bisa di-save */}
+      {/* Box Template Pesan Custom WhatsApp */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-3">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+        <div className="flex justify-between items-center">
           <div className="flex items-center gap-2 text-slate-800 font-bold text-sm">
             <FileText size={18} className="text-rose-600" />
-            <span>Format Teks Pesan WhatsApp Klien (Custom)</span>
+            <span>Format Teks Pesan WhatsApp</span>
           </div>
-          <span className="text-xs text-slate-400">
-            Gunakan <code className="text-rose-600 bg-rose-50 px-1 py-0.5 rounded font-mono">{"{nama}"}</code> & <code className="text-rose-600 bg-rose-50 px-1 py-0.5 rounded font-mono">{"{link}"}</code>
-          </span>
         </div>
-
         <textarea
-          rows={7}
+          rows={5}
           value={waTemplate}
           onChange={(e) => setWaTemplate(e.target.value)}
-          className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-sans text-slate-700 focus:outline-none focus:ring-2 focus:ring-rose-500"
-          placeholder="Tulis format teks undangan Anda di sini..."
+          className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-rose-500"
         />
-
-        <div className="flex items-center justify-between pt-1">
-          <span className="text-xs text-slate-400">
-            *Perubahan teks bisa diubah sesuai kebutuhan. Gunakan tombol "Simpan Template" untuk menyimpan format pesan yang telah diedit.
-          </span>
+        <div className="flex justify-end">
           <button
             onClick={handleSaveTemplate}
             className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${saveStatus ? 'bg-emerald-600 text-white' : 'bg-slate-800 hover:bg-slate-900 text-white'}`}
           >
             {saveStatus ? <Check size={14} /> : <Save size={14} />}
-            <span>{saveStatus ? 'Template Tersimpan!' : 'Simpan Template'}</span>
+            <span>{saveStatus ? 'Tersimpan!' : 'Simpan Template'}</span>
           </button>
         </div>
       </div>
@@ -242,9 +278,15 @@ Wassalamu’alaikum Wr. Wb.`;
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
-              {filteredTamu.length > 0 ? (
-                filteredTamu.map((tamu) => (
-                  <tr key={tamu.id} className="hover:bg-slate-50/50 transition-colors">
+              {loading ? (
+                <tr>
+                  <td colSpan="3" className="p-8 text-center text-slate-400 text-sm">
+                    Memuat data tamu...
+                  </td>
+                </tr>
+              ) : filteredTamu.length > 0 ? (
+                filteredTamu.map((tamu, index) => (
+                  <tr key={index} className="hover:bg-slate-50/50 transition-colors">
                     <td className="p-4">
                       <div className="font-semibold text-slate-800">{tamu.name}</div>
                       {tamu.phone && <div className="text-xs text-slate-400">{tamu.phone}</div>}
@@ -254,44 +296,28 @@ Wassalamu’alaikum Wr. Wb.`;
                     </td>
                     <td className="p-4">
                       <div className="flex items-center justify-center gap-2">
-                        
-                        {/* Tombol Salin Link */}
                         <button
-                          onClick={() => handleCopyLinkOnly(tamu.name, tamu.id)}
-                          className={`px-3 py-1.5 rounded-lg border text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${copiedId === `link-${tamu.id}` ? 'bg-emerald-50 border-emerald-300 text-emerald-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
-                          title="Salin URL Link Saja"
+                          onClick={() => handleCopyLinkOnly(tamu.name, index)}
+                          className={`px-3 py-1.5 rounded-lg border text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${copiedId === `link-${index}` ? 'bg-emerald-50 border-emerald-300 text-emerald-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
                         >
-                          {copiedId === `link-${tamu.id}` ? <Check size={14} /> : <Copy size={14} />}
-                          <span>{copiedId === `link-${tamu.id}` ? 'Tersalin' : 'Salin Link'}</span>
+                          {copiedId === `link-${index}` ? <Check size={14} /> : <Copy size={14} />}
+                          <span>{copiedId === `link-${index}` ? 'Tersalin' : 'Salin Link'}</span>
                         </button>
 
-                        {/* Tombol Salin Pesan Lengkap */}
                         <button
-                          onClick={() => handleCopyFullMessage(tamu.name, tamu.id)}
-                          className={`px-3 py-1.5 rounded-lg border text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${copiedId === `msg-${tamu.id}` ? 'bg-emerald-50 border-emerald-300 text-emerald-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
-                          title="Salin Pesan Berdasarkan Template Klien"
+                          onClick={() => handleCopyFullMessage(tamu.name, index)}
+                          className={`px-3 py-1.5 rounded-lg border text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${copiedId === `msg-${index}` ? 'bg-emerald-50 border-emerald-300 text-emerald-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
                         >
-                          {copiedId === `msg-${tamu.id}` ? <Check size={14} /> : <MessageCircle size={14} className="text-emerald-600" />}
-                          <span>{copiedId === `msg-${tamu.id}` ? 'Teks Tersalin!' : 'Salin Pesan WA'}</span>
+                          {copiedId === `msg-${index}` ? <Check size={14} /> : <MessageCircle size={14} className="text-emerald-600" />}
+                          <span>{copiedId === `msg-${index}` ? 'Tersalin!' : 'Salin Pesan'}</span>
                         </button>
 
-                        {/* Tombol Kirim WhatsApp */}
                         <button
                           onClick={() => handleSendWhatsapp(tamu.name, tamu.phone)}
                           className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
-                          title="Kirim WhatsApp Langsung"
                         >
                           <Send size={14} />
                           <span className="hidden sm:inline">Kirim WA</span>
-                        </button>
-
-                        {/* Tombol Hapus */}
-                        <button
-                          onClick={() => handleDelete(tamu.id)}
-                          className="p-1.5 hover:bg-rose-50 text-rose-500 rounded-lg transition-all cursor-pointer"
-                          title="Hapus Tamu"
-                        >
-                          <Trash2 size={16} />
                         </button>
                       </div>
                     </td>
@@ -300,7 +326,7 @@ Wassalamu’alaikum Wr. Wb.`;
               ) : (
                 <tr>
                   <td colSpan="3" className="p-8 text-center text-slate-400 text-sm">
-                    Tidak ada data tamu yang ditemukan.
+                    Belum ada data tamu. Silakan tambah tamu baru.
                   </td>
                 </tr>
               )}
