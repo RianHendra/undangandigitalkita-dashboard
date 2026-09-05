@@ -47,12 +47,12 @@ export default function Tamu() {
 
 Yth. Ibu/Bapak/Saudara/i *{nama}*,
 
-Dengan penuh kebahagiaan, kami mengundang Ibu/Bapak/Saudara/i untuk hadir di acara *Akad Pernikahan Ery & Amel*. 💍✨
+Dengan penuh kebahagiaan, kami mengundang Ibu/Bapak/Saudara/i untuk hadir di acara *Resepsi Pernikahan Ery & Amel*. 💍✨
 
-📅 Sabtu, 05 September 2026
+📅 Minggu, 13 September 2026
 🕘 Pukul 09.00 WITA – selesai
-📍 Rumah Mempelai Wanita
-Jl. Sungai Andai Komplek PWI Blok E No. 121
+📍 Rumah Mempelai Pria
+Jl. Antasan Kecil Barat Gg. Ibu RT.13 No.59 (Kampung Arab, Samping SDN Pasar Lama 6)
 
 Untuk informasi lengkap mengenai acara dan konfirmasi kehadiran, silakan buka undangan digital berikut:
 
@@ -74,7 +74,7 @@ Wassalamu’alaikum Wr. Wb.`;
   };
 
   const getPersonalLink = (name) => {
-    return `https://www.undangandigitalkita.my.id/erydanamel/akad?to=${encodeURIComponent(name)}`;
+    return `https://www.undangandigitalkita.my.id/erydanamel/resepsi?to=${encodeURIComponent(name)}`;
   };
 
   const generateMessage = (name) => {
@@ -292,7 +292,7 @@ await fetch(SCRIPT_URL, {
                       {tamu.phone && <div className="text-xs text-slate-400">{tamu.phone}</div>}
                     </td>
                     <td className="p-4 text-slate-400 text-xs font-mono">
-                      .../erydanamel/akad?to={encodeURIComponent(tamu.name)}
+                      .../erydanamel/resepsi?to={encodeURIComponent(tamu.name)}
                     </td>
                     <td className="p-4">
                       <div className="flex items-center justify-center gap-2">
