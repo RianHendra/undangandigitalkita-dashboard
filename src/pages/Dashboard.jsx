@@ -115,7 +115,7 @@ export default function Dashboard() {
             <p className="text-slate-500 text-sm">Kelola seluruh kebutuhan undangan digital Anda di sini.</p>
           </div>
           <a
-            href="https://www.undangandigitalkita.my.id/erydanamel"
+            href="https://www.undangandigitalkita.my.id/erydanamel/resepsi?"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-4 py-2 rounded-xl text-sm font-medium shadow-sm transition-all w-full sm:w-auto"
