@@ -74,7 +74,7 @@ Wassalamu’alaikum Wr. Wb.`;
   };
 
   const getPersonalLink = (name) => {
-    return `https://www.undangandigitalkita.my.id/erydanamel/resepsi?to=${encodeURIComponent(name)}`;
+    return `https://www.undangandigitalkita.my.id/erydanamel/full?to=${encodeURIComponent(name)}`;
   };
 
   const generateMessage = (name) => {
@@ -292,7 +292,7 @@ await fetch(SCRIPT_URL, {
                       {tamu.phone && <div className="text-xs text-slate-400">{tamu.phone}</div>}
                     </td>
                     <td className="p-4 text-slate-400 text-xs font-mono">
-                      .../erydanamel/resepsi?to={encodeURIComponent(tamu.name)}
+                      .../erydanamel/full?to={encodeURIComponent(tamu.name)}
                     </td>
                     <td className="p-4">
                       <div className="flex items-center justify-center gap-2">
